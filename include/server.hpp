@@ -7,6 +7,8 @@ public:
     HttpServer();
     void initServer();
     void acceptConnections();
+    static void stopServer(int signum);
+    void cleanup();
     ~HttpServer();
 
 private:
