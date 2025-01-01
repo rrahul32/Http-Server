@@ -1,6 +1,11 @@
 #include <iostream>
+#include "server.hpp"
 
-int main(){
-    std::cout<<"Hello World"<<std::endl;
+int main()
+{
+    HttpServer server;
+    server.initServer();
+    server.acceptConnections();
+
     return 0;
 }

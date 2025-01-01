@@ -7,4 +7,5 @@ include_directories(include)
 
 add_executable(http_server
     src/main.cpp
+    src/server.cpp
 )
