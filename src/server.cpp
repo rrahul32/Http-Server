@@ -90,8 +90,7 @@ void HttpServer::acceptConnections()
 
             std::cout << "New connection accepted!" << std::endl;
 
-            // Handle the connection (in a real server, you would spawn a new thread here)
-            close(new_socket);
+            handleRequest(new_socket);
         }
     }
 }
@@ -110,6 +109,35 @@ void HttpServer::cleanup()
         close(server_fd);
     if (new_socket != -1)
         close(new_socket);
+}
+
+void HttpServer::handleRequest(int client_socket)
+{
+    char buffer[1024] = {0};
+    int bytes_read = read(client_socket, buffer, 1024);
+
+    if (bytes_read < 0)
+    {
+        perror("Error reading from socket");
+        close(client_socket);
+        return;
+    }
+
+    std::string request(buffer, bytes_read);
+
+    // Process the request and generate a response
+    std::string response = "HTTP/1.1 200 OK\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "Content-Length: 13\r\n"
+                           "\r\n"
+                           "Hello, World!";
+
+    int bytes_sent = send(client_socket, response.c_str(), response.size(), 0);
+    if (bytes_sent < 0)
+    {
+        perror("Error sending response");
+    }
+    close(client_socket);
 }
 
 HttpServer::~HttpServer()

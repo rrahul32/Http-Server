@@ -9,6 +9,7 @@ public:
     void acceptConnections();
     static void stopServer(int signum);
     void cleanup();
+    void handleRequest(int client_socket);
     ~HttpServer();
 
 private:
