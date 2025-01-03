@@ -5,6 +5,7 @@
 #include <csignal>
 #include <atomic>
 #include <chrono>
+#include <sstream>
 
 #include "server.hpp"
 
@@ -123,7 +124,18 @@ void HttpServer::handleRequest(int client_socket)
         return;
     }
 
-    std::string request(buffer, bytes_read);
+    std::string rawRequest(buffer, bytes_read);
+    HttpRequest request = parseRequest(rawRequest);
+
+    // print the request
+    std::cout << "Method: " << request.method << std::endl;
+    std::cout << "URI: " << request.uri << std::endl;
+    std::cout << "Headers: " << std::endl;
+    for (const auto &header : request.headers)
+    {
+        std::cout << header.first << ": " << header.second << std::endl;
+    }
+    std::cout << "Body: " << request.body << std::endl;
 
     // Process the request and generate a response
     std::string response = "HTTP/1.1 200 OK\r\n"
@@ -143,4 +155,37 @@ void HttpServer::handleRequest(int client_socket)
 HttpServer::~HttpServer()
 {
     cleanup();
+}
+
+HttpRequest HttpServer::parseRequest(const std::string &request)
+{
+    HttpRequest httpRequest;
+
+    // Parse the request
+    std::istringstream stream(request);
+    std::string line;
+
+    // parse the method and uri
+    if (std::getline(stream, line))
+    {
+        std::istringstream lineStream(line);
+        lineStream >> httpRequest.method >> httpRequest.uri;
+    }
+
+    // parse the headers
+    while (std::getline(stream, line) && line != "\r\n")
+    {
+        auto delimiterPos = line.find(':');
+        if (delimiterPos != std::string::npos)
+        {
+            httpRequest.headers[line.substr(0, delimiterPos)] = line.substr(delimiterPos + 2);
+        }
+    }
+
+    // parse rest as the body
+    std::ostringstream bodyStream;
+    bodyStream << stream.rdbuf();
+    httpRequest.body = bodyStream.str();
+
+    return httpRequest;
 }
