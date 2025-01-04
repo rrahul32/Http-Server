@@ -127,22 +127,7 @@ void HttpServer::handleRequest(int client_socket)
     std::string rawRequest(buffer, bytes_read);
     HttpRequest request = parseRequest(rawRequest);
 
-    // print the request
-    std::cout << "Method: " << request.method << std::endl;
-    std::cout << "URI: " << request.uri << std::endl;
-    std::cout << "Headers: " << std::endl;
-    for (const auto &header : request.headers)
-    {
-        std::cout << header.first << ": " << header.second << std::endl;
-    }
-    std::cout << "Body: " << request.body << std::endl;
-
-    // Process the request and generate a response
-    std::string response = "HTTP/1.1 200 OK\r\n"
-                           "Content-Type: text/plain\r\n"
-                           "Content-Length: 13\r\n"
-                           "\r\n"
-                           "Hello, World!";
+    std::string response = generateResponse(request);
 
     int bytes_sent = send(client_socket, response.c_str(), response.size(), 0);
     if (bytes_sent < 0)
@@ -188,4 +173,27 @@ HttpRequest HttpServer::parseRequest(const std::string &request)
     httpRequest.body = bodyStream.str();
 
     return httpRequest;
+}
+
+void HttpServer::registerRoute(const std::string &method, const std::string &uri, HandlerFunction handler)
+{
+    std::string key = method + ":" + uri;
+    routes[key] = handler;
+}
+
+std::string HttpServer::generateResponse(const HttpRequest &request)
+{
+    std::string key = request.method + ":" + request.uri;
+    if (routes.find(key) != routes.end())
+    {
+        // Call the handler function for the route
+        return routes[key](request);
+    }
+
+    // Default response for unhandled routes
+    return "HTTP/1.1 404 Not Found\r\n"
+           "Content-Type: text/plain\r\n"
+           "Content-Length: 13\r\n"
+           "\r\n"
+           "404 Not Found";
 }
