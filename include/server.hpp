@@ -11,6 +11,7 @@ struct HttpRequest
     std::string uri;
     std::string body;
     std::map<std::string, std::string> headers;
+    std::map<std::string, std::string> queryParams;
 };
 
 class HttpServer
@@ -27,10 +28,11 @@ public:
     using HandlerFunction = std::function<std::string(const HttpRequest &)>;
     void registerRoute(const std::string &method, const std::string &uri, HandlerFunction handler);
     std::string generateResponse(const HttpRequest &request);
+    std::map<std::string, std::string> getQueryParams(const std::string &query);
 
 private:
     int server_fd, new_socket;
-    std::map<std::string, HandlerFunction> routes; // Map of method:URI -> handler
+    std::map<std::string, HandlerFunction> routes;
 };
 
 #endif

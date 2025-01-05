@@ -155,6 +155,15 @@ HttpRequest HttpServer::parseRequest(const std::string &request)
     {
         std::istringstream lineStream(line);
         lineStream >> httpRequest.method >> httpRequest.uri;
+
+        // parse the query params
+        int queryPos = httpRequest.uri.find('?');
+        if (queryPos != std::string::npos)
+        {
+            std::string queryString = httpRequest.uri.substr(queryPos + 1);
+            httpRequest.uri = httpRequest.uri.substr(0, queryPos);
+            httpRequest.queryParams = getQueryParams(queryString);
+        }
     }
 
     // parse the headers
@@ -171,6 +180,21 @@ HttpRequest HttpServer::parseRequest(const std::string &request)
     std::ostringstream bodyStream;
     bodyStream << stream.rdbuf();
     httpRequest.body = bodyStream.str();
+
+    // debug
+    std::cout << "Method: " << httpRequest.method << std::endl;
+    std::cout << "URI: " << httpRequest.uri << std::endl;
+    std::cout << "Query Params: " << std::endl;
+    for (const auto &param : httpRequest.queryParams)
+    {
+        std::cout << param.first << ": " << param.second << std::endl;
+    }
+    std::cout << "Headers: " << std::endl;
+    for (const auto &header : httpRequest.headers)
+    {
+        std::cout << header.first << ": " << header.second << std::endl;
+    }
+    std::cout << "Body: " << httpRequest.body << std::endl;
 
     return httpRequest;
 }
@@ -196,4 +220,21 @@ std::string HttpServer::generateResponse(const HttpRequest &request)
            "Content-Length: 13\r\n"
            "\r\n"
            "404 Not Found";
+}
+
+std::map<std::string, std::string> HttpServer::getQueryParams(const std::string &query)
+{
+    std::map<std::string, std::string> queryParams;
+    std::istringstream queryStream(query);
+    std::string param;
+    while (std::getline(queryStream, param, '&'))
+    {
+        auto delimiterPos = param.find('=');
+        if (delimiterPos != std::string::npos)
+        {
+            queryParams[param.substr(0, delimiterPos)] = param.substr(delimiterPos + 1);
+        }
+    }
+
+    return queryParams;
 }
